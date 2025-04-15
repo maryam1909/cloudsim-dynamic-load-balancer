@@ -52,9 +52,6 @@ public class DynamicLoadBalancerExample {
                         "Xen", new CloudletSchedulerTimeShared());
                 vmList.add(vm);
             }
-            
-          
-
 
             broker.submitGuestList(vmList);
 
@@ -76,8 +73,6 @@ public class DynamicLoadBalancerExample {
             }
 
             broker.submitCloudletList(cloudletList);
-            RoundRobinLoadBalancer rrBalancer = new RoundRobinLoadBalancer();
-            rrBalancer.assignCloudletsToVms(cloudletList, vmList, broker);
 
             // Step 6: Start Simulation
             CloudSim.startSimulation();
@@ -95,14 +90,15 @@ public class DynamicLoadBalancerExample {
         }
     }
 
+    // Method to create Datacenter
     private static Datacenter createDatacenter(String name) throws Exception {
         List<Host> hostList = new ArrayList<>();
         List<Pe> peList = new ArrayList<>();
 
-        int mips = 1000;
+        int mips = 10000;
         peList.add(new Pe(0, new PeProvisionerSimple(mips)));
 
-        int ram = 2048; // MB
+        int ram = 8192; // MB
         long storage = 1_000_000; // MB
         int bw = 10000;
 
@@ -129,29 +125,32 @@ public class DynamicLoadBalancerExample {
                 new VmAllocationPolicySimple(hostList), new LinkedList<>(), 10);
     }
 
+    // Method to find the VM with the least cloudlets
     private static int findLeastLoadedVm(List<Vm> vmList, List<Cloudlet> assignedCloudlets) {
         int[] vmLoads = new int[vmList.size()];
 
+        // Count the number of cloudlets assigned to each VM
         for (Cloudlet cloudlet : assignedCloudlets) {
             if (cloudlet.getVmId() >= 0 && cloudlet.getVmId() < vmLoads.length) {
                 vmLoads[cloudlet.getVmId()]++;
             }
         }
 
+        // Find the VM with the least load (cloudlets)
         int minLoad = Integer.MAX_VALUE;
         int bestVmId = 0;
 
-        for (Vm vm : vmList) {
-            int currentLoad = vmLoads[vm.getId()];
-            if (currentLoad < minLoad) {
-                minLoad = currentLoad;
-                bestVmId = vm.getId();
+        for (int i = 0; i < vmLoads.length; i++) {
+            if (vmLoads[i] < minLoad) {
+                minLoad = vmLoads[i];
+                bestVmId = i;
             }
         }
 
         return bestVmId;
     }
 
+    // Method to print the results
     private static void printCloudletResults(List<Cloudlet> list) {
         String indent = "    ";
         Log.printLine("\n========== OUTPUT ==========");
@@ -167,4 +166,3 @@ public class DynamicLoadBalancerExample {
         }
     }
 }
-
